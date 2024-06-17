@@ -1,0 +1,50 @@
+package {{ .PkgName }}
+
+import "{{ .EnumPath }}"
+
+{{ $lowerValType := (lowerFirst .valType) }}
+{{ $lowerAntType := (lowerFirst .antType) }}
+
+type Enum struct {
+	enum.Val{{ .valType }}
+	enum.Ant{{ .antType }}
+}
+
+{{range $key, $value := .Data}}
+var {{ $value.Name }} = Enum{ {{ quoteIfStr $value.Val }}, {{ quoteIfStr $value.Annotation }} } {{end}}
+
+
+func (r Enum) GetVal() {{ $lowerValType }} {
+	return r.Val{{ .valType }}.{{ .valType }}()
+}
+
+func (r Enum) GetAnnotation() {{ $lowerAntType }}{
+	return r.Ant{{ .antType }}.{{ .antType }}()
+}
+
+// Convert 将数据转换成类型，如果该数据值未定义，则直接转换为对应空值
+func Convert(s {{ $lowerValType }}) Enum {
+	switch s { {{range $key, $value := .Data}}
+	case {{ quoteIfStr $value.Val }}:
+    		return {{ $value.Name}}{{end}}
+	}
+	return Enum{}
+}
+
+func Maps() map[{{ $lowerValType }}]{{ $lowerAntType }} {
+	return map[{{ $lowerValType }}]{{ $lowerAntType }}{ {{range $key, $value := .Data}}
+    	{{ quoteIfStr $value.Val }}: {{ quoteIfStr $value.Annotation }} ,{{end}}
+    }
+}
+
+func AntMaps() map[{{ $lowerAntType }}]{{ $lowerValType }} {
+	return map[{{ $lowerAntType }}]{{ $lowerValType }}{ {{range $key, $value := .Data}}
+            {{ quoteIfStr $value.Annotation }}: {{ quoteIfStr $value.Val }} ,{{end}}
+    }
+}
+
+func Options() []map[string]interface{} {
+	return []map[string]interface{}{ {{range $key, $value := .Data}}
+    	    {"label": {{ quoteIfStr $value.Annotation }}, "value": {{ quoteIfStr $value.Val }} },{{end}}
+    }
+}
