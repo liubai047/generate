@@ -13,7 +13,7 @@ import (
 	"strings"
 	"text/template"
 
-	"generate/enum"
+	"github.com/liubai047/generate/enum"
 )
 
 //go:embed template/gen.go.tmpl

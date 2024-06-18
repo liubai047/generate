@@ -6,7 +6,7 @@ import (
 	"log"
 	"testing"
 
-	"generate/enum"
+	"github.com/liubai047/generate/enum"
 )
 
 func TestMainTry(m *testing.T) {

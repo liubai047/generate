@@ -11,12 +11,12 @@ import (
 	"testing"
 	"text/template"
 
-	"generate/enum"
+	"github.com/liubai047/generate/enum"
 )
 
 var testMyEnum = enum.GenEnum{
 	PkgName:  "RpStatusEnum",
-	EnumPath: "generate/enum",
+	EnumPath: "github.com/liubai047/generate/enum",
 	Data: []enum.Item{
 		{Name: "Success4", Val: "assc", Annotation: "成功咯"},
 		{Name: "Fail3", Val: "fffc", Annotation: "失败咯"},

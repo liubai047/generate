@@ -3,7 +3,7 @@ package RpStatusEnum
 import (
 	"encoding/json"
 
-	"generate/enum"
+	"github.com/liubai047/generate/enum"
 )
 
 var _ json.Marshaler = Enum{}

@@ -1,6 +1,6 @@
 package test
 
-import "generate/enum"
+import "github.com/liubai047/generate/enum"
 
 //go:generate generate --struct_file=gen.go --struct_name=tsRpStsEnum
 var tsRpStsEnum = enum.GenEnum{
