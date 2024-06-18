@@ -1,4 +1,4 @@
-package enum
+package test
 
 import (
 	"bytes"
@@ -10,46 +10,26 @@ import (
 	"strings"
 	"testing"
 	"text/template"
+
+	"generate/enum"
 )
 
-func TestDm2(t *testing.T) {
-	generate("./gen.go.tmpl", genReportStatus)
-	//tmplF, err := os.OpenFile("./gen.go.tmpl", os.O_RDONLY, os.ModePerm)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//defer tmplF.Close()
-	//fTmlpRes, _ := io.ReadAll(tmplF)
-	//
-	//f, err := os.OpenFile("./testpkg/gen_d2.go", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, os.ModePerm)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//defer f.Close()
-	//
-	//tmpl := template.Must(template.New("function").Funcs(template.FuncMap{
-	//	"lowerFirst": lowerFirst,
-	//	"upFirst":    upFirst,
-	//	"camelCase":  camelCase,
-	//	"quoteIfStr": quoteIfString,
-	//	"structName": structName,
-	//}).Parse(string(fTmlpRes)))
-	//var codeBuf bytes.Buffer
-	//err = tmpl.Execute(&codeBuf, genReportStatus)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//formatterCode, err := format.Source(codeBuf.Bytes())
-	//if err != nil {
-	//	panic(err)
-	//}
-	//_, err = io.WriteString(f, string(formatterCode))
-	//if err != nil {
-	//	panic(err)
-	//}
+var testMyEnum = enum.GenEnum{
+	PkgName:  "RpStatusEnum",
+	EnumPath: "generate/enum",
+	Data: []enum.Item{
+		{Name: "Success4", Val: "assc", Annotation: "成功咯"},
+		{Name: "Fail3", Val: "fffc", Annotation: "失败咯"},
+		{Name: "Wait2", Val: "wwwc", Annotation: "待拉咯"},
+		{Name: "Deal1", Val: "dddc", Annotation: "待处理咯"},
+	},
 }
 
-func generate(tmplFile string, genData GenEnum) {
+func TestDm2(t *testing.T) {
+	generate("./gen.go.tmpl", testMyEnum)
+}
+
+func generate(tmplFile string, genData enum.GenEnum) {
 	// 判断数据是否合法
 	if genData.PkgName == "" || genData.EnumPath == "" || len(genData.Data) < 1 {
 		log.Fatalf("GenEnum结构体数据不合规,请检查\n")
@@ -113,7 +93,7 @@ func generate(tmplFile string, genData GenEnum) {
 	}
 }
 
-func createGenData(gen GenEnum) map[string]interface{} {
+func createGenData(gen enum.GenEnum) map[string]interface{} {
 	var res = make(map[string]interface{})
 	res["PkgName"] = gen.PkgName
 	res["EnumPath"] = gen.EnumPath

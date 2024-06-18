@@ -2,42 +2,69 @@ package main
 
 import (
 	"bytes"
+	_ "embed"
+	"encoding/json"
 	"flag"
 	"fmt"
-	"generate/enum"
 	"go/format"
 	"io"
 	"log"
 	"os"
 	"strings"
 	"text/template"
+
+	"generate/enum"
 )
 
+//go:embed template/gen.go.tmpl
+var tmplEnumFile []byte
+
 func main() {
-	tmplFile := flag.String("tmplFile", "", "模板文件位置，推荐使用相对路径，例如：./template/a.go.tmpl")
+	// tmplFile := flag.String("tmplFile", "./gen.go.tmpl", "一期不填.模板文件位置，推荐使用相对路径，例如：./template/a.go.tmpl")
 	structFile := flag.String("struct_file", "", "结构体所在文件路径，也推荐使用相对路径")
 	structName := flag.String("struct_name", "", "结构体所在文件名字")
+	dstFile := flag.String("dstFile", "", "生成文件所在位置，默认为./genData.PkgName/enum.go")
 	flag.Parse()
-	if *tmplFile == "" || *structFile == "" || *structName == "" {
-		log.Fatalf("参数有误")
+	// if *tmplFile == "" {
+	// 	log.Fatalf("tmplFile参数有误")
+	// }
+	if *structFile == "" {
+		log.Fatalf("structFile参数有误")
 	}
+	if *structName == "" {
+		log.Fatalf("structName参数有误")
+	}
+	data, err := astStruct(*structFile, *structName)
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
+	var genData enum.GenEnum
+	err = json.Unmarshal(data, &genData)
+	if err != nil {
+		log.Fatalf("反序列化数据到genData失败:%s", err.Error())
+	}
+	// 处理待写入路径
+	if *dstFile == "" {
+		*dstFile = "./" + genData.PkgName + "/enum.go"
+	}
+	generateEnum(*dstFile, genData)
 }
 
 // 创建枚举包
-func generateEnum(tmplFile string, genData enum.GenEnum) {
+// dstFile表示生成文件名，不存在路径会自动创建
+// genData表示枚举数据
+func generateEnum(dstFile string, genData enum.GenEnum) {
 	// 判断数据是否合法
 	if genData.PkgName == "" || genData.EnumPath == "" || len(genData.Data) < 1 {
 		log.Fatalf("GenEnum结构体数据不合规,请检查\n")
 		return
 	}
-	// 打开并读取模板文件
-	tfRes, err := os.ReadFile(tmplFile)
-	if err != nil {
-		log.Fatalf("模板文件读取失败: %s\n", err.Error())
-		return
-	}
-	// 处理待写入路径
-	dstFile := "./" + genData.PkgName + "/enum.go"
+	// 打开并读取模板文件,暂时改为打包时打包静态资源文件
+	// tfRes, err := os.ReadFile(tmplFile)
+	// if err != nil {
+	// 	log.Fatalf("模板文件读取失败: %s\n", err.Error())
+	// 	return
+	// }
 	// 处理待写入的文件路径
 	var pathDir = ""
 	if slashIndex := strings.LastIndex(dstFile, "/"); slashIndex != -1 {
@@ -65,7 +92,7 @@ func generateEnum(tmplFile string, genData enum.GenEnum) {
 		"upFirst":    upFirst,
 		"camelCase":  camelCase,
 		"quoteIfStr": quoteIfString,
-	}).Parse(string(tfRes)))
+	}).Parse(string(tmplEnumFile)))
 	// 获取模板最终生成结果
 	var codeBuf bytes.Buffer
 	cGenData := createGenData(genData)
@@ -110,7 +137,7 @@ func createGenData(gen enum.GenEnum) map[string]interface{} {
 	default:
 		res["antType"] = "Int"
 	}
-	fmt.Printf("%v\n", res)
+	// fmt.Printf("%v\n", json.Marshal(res))
 	return res
 }
 

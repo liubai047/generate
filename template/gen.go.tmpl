@@ -1,6 +1,13 @@
 package {{ .PkgName }}
 
-import "{{ .EnumPath }}"
+import (
+    "encoding/json"
+
+    "{{ .EnumPath }}"
+)
+
+var _ json.Marshaler = Enum{}
+var _ json.Unmarshaler = Enum{}
 
 {{ $lowerValType := (lowerFirst .valType) }}
 {{ $lowerAntType := (lowerFirst .antType) }}
@@ -13,16 +20,38 @@ type Enum struct {
 {{range $key, $value := .Data}}
 var {{ $value.Name }} = Enum{ {{ quoteIfStr $value.Val }}, {{ quoteIfStr $value.Annotation }} } {{end}}
 
-
+// GetVal 获取枚举值
 func (r Enum) GetVal() {{ $lowerValType }} {
 	return r.Val{{ .valType }}.{{ .valType }}()
 }
 
+// GetAnnotation 获取枚举注释
 func (r Enum) GetAnnotation() {{ $lowerAntType }}{
 	return r.Ant{{ .antType }}.{{ .antType }}()
 }
 
+// MarshalJSON 实现MarshalJSON接口
+func (r Enum) MarshalJSON() ([]byte, error) {
+	return []byte(r.GetVal()), nil
+}
+
+// UnmarshalJSON 实现UnmarshalJSON接口
+func (r Enum) UnmarshalJSON(data []byte) error {
+	type Temp Enum
+	tmp := &struct {
+		Temp
+	}{
+		Temp: Temp(r),
+	}
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+	return nil
+}
+
 // Convert 将数据转换成类型，如果该数据值未定义，则直接转换为对应空值
+//
+// 判定空值可以使用Convert(xx) == xx.ReportStatusEnum{}
 func Convert(s {{ $lowerValType }}) Enum {
 	switch s { {{range $key, $value := .Data}}
 	case {{ quoteIfStr $value.Val }}:
@@ -31,18 +60,21 @@ func Convert(s {{ $lowerValType }}) Enum {
 	return Enum{}
 }
 
+// Maps 获取枚举值和枚举注释组成的map
 func Maps() map[{{ $lowerValType }}]{{ $lowerAntType }} {
 	return map[{{ $lowerValType }}]{{ $lowerAntType }}{ {{range $key, $value := .Data}}
     	{{ quoteIfStr $value.Val }}: {{ quoteIfStr $value.Annotation }} ,{{end}}
     }
 }
 
+// AntMaps 获取枚举注释和枚举值组成的map
 func AntMaps() map[{{ $lowerAntType }}]{{ $lowerValType }} {
 	return map[{{ $lowerAntType }}]{{ $lowerValType }}{ {{range $key, $value := .Data}}
             {{ quoteIfStr $value.Annotation }}: {{ quoteIfStr $value.Val }} ,{{end}}
     }
 }
 
+// Options 获取枚举注释和枚举值组成的下拉列表
 func Options() []map[string]interface{} {
 	return []map[string]interface{}{ {{range $key, $value := .Data}}
     	    {"label": {{ quoteIfStr $value.Annotation }}, "value": {{ quoteIfStr $value.Val }} },{{end}}
