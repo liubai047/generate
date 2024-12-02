@@ -1,16 +1,17 @@
 package {{ .PkgName }}
 
+{{ $lowerValType := (lowerFirst .valType) }}
+{{ $lowerAntType := (lowerFirst .antType) }}
+
 import (
     "encoding/json"
+    "errors"
 
     "{{ .EnumPath }}"
 )
 
-var _ json.Marshaler = Enum{}
-var _ json.Unmarshaler = Enum{}
-
-{{ $lowerValType := (lowerFirst .valType) }}
-{{ $lowerAntType := (lowerFirst .antType) }}
+var _ json.Marshaler = &Enum{}
+var _ json.Unmarshaler = &Enum{}
 
 type Enum struct {
 	enum.Val{{ .valType }}
@@ -21,32 +22,33 @@ type Enum struct {
 var {{ $value.Name }} = Enum{ {{ quoteIfStr $value.Val }}, {{ quoteIfStr $value.Annotation }} } {{end}}
 
 // GetVal 获取枚举值
-func (r Enum) GetVal() {{ $lowerValType }} {
+func (r *Enum) GetVal() {{ $lowerValType }} {
 	return r.Val{{ .valType }}.{{ .valType }}()
 }
 
 // GetAnnotation 获取枚举注释
-func (r Enum) GetAnnotation() {{ $lowerAntType }}{
+func (r *Enum) GetAnnotation() {{ $lowerAntType }}{
 	return r.Ant{{ .antType }}.{{ .antType }}()
 }
 
 // MarshalJSON 实现MarshalJSON接口
-func (r Enum) MarshalJSON() ([]byte, error) {
-	return []byte(r.GetVal()), nil
+func (r *Enum) MarshalJSON() ([]byte, error) {
+    return json.Marshal(r.GetVal())
 }
 
 // UnmarshalJSON 实现UnmarshalJSON接口
-func (r Enum) UnmarshalJSON(data []byte) error {
-	type Temp Enum
-	tmp := &struct {
-		Temp
-	}{
-		Temp: Temp(r),
-	}
-	if err := json.Unmarshal(data, &tmp); err != nil {
-		return err
-	}
-	return nil
+func (r *Enum) UnmarshalJSON(data []byte) error {
+    var val {{ $lowerValType }}
+    err := json.Unmarshal(data, &val)
+    if err != nil {
+        return errors.New("{{ .PkgName }} Unmarshal error: " + err.Error())
+    }
+    res := Convert(val)
+    if res == (Enum{}) {
+        return errors.New("{{ .PkgName }} enum value error")
+    }
+    *r = res
+    return nil
 }
 
 // Convert 将数据转换成类型，如果该数据值未定义，则直接转换为对应空值
