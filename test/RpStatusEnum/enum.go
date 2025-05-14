@@ -51,7 +51,6 @@ func (r *Enum) UnmarshalJSON(data []byte) error {
 }
 
 // Convert 将数据转换成类型，如果该数据值未定义，则直接转换为对应空值
-//
 // 判定空值可以使用Convert(xx) == nil
 func Convert(s string) *Enum {
 	switch s {
