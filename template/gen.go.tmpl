@@ -19,7 +19,7 @@ type Enum struct {
 }
 
 {{range $key, $value := .Data}}
-var {{ $value.Name }} = Enum{ {{ quoteIfStr $value.Val }}, {{ quoteIfStr $value.Annotation }} } {{end}}
+var {{ $value.Name }} = &Enum{ {{ quoteIfStr $value.Val }}, {{ quoteIfStr $value.Annotation }} } {{end}}
 
 // GetVal 获取枚举值
 func (r *Enum) GetVal() {{ $lowerValType }} {
@@ -44,22 +44,22 @@ func (r *Enum) UnmarshalJSON(data []byte) error {
         return errors.New("{{ .PkgName }} Unmarshal error: " + err.Error())
     }
     res := Convert(val)
-    if res == (Enum{}) {
+    if res == nil {
         return errors.New("{{ .PkgName }} enum value error")
     }
-    *r = res
+    *r = *res
     return nil
 }
 
 // Convert 将数据转换成类型，如果该数据值未定义，则直接转换为对应空值
 //
-// 判定空值可以使用Convert(xx) == xx.ReportStatusEnum{}
-func Convert(s {{ $lowerValType }}) Enum {
+// 判定空值可以使用Convert(xx) == nil
+func Convert(s {{ $lowerValType }}) *Enum {
 	switch s { {{range $key, $value := .Data}}
 	case {{ quoteIfStr $value.Val }}:
     		return {{ $value.Name}}{{end}}
 	}
-	return Enum{}
+	return nil
 }
 
 // Maps 获取枚举值和枚举注释组成的map
